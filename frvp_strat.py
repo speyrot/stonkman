@@ -14,78 +14,76 @@ class TradingApp(QWidget):
         self.initUI()
     
     def initUI(self):
-        main_layout = QHBoxLayout()  
-        main_layout.setSpacing(10)  
+        main_layout = QVBoxLayout()  # Main vertical layout
 
-        # Left side for controls
+        # First Row with three columns
+        row1_layout = QHBoxLayout()
+
+        # Column 1: Controls (left column for indicators)
         controls_layout = QVBoxLayout()
-        controls_layout.setSpacing(3)
-        controls_layout.setContentsMargins(5, 5, 5, 5)  
-
-        # Right side for inputs
-        input_layout = QVBoxLayout()
-        input_layout.setSpacing(3)
-        input_layout.setContentsMargins(5, 5, 5, 5)  
-
-        # Adding widgets to controls_layout
         self.ma50_check = QCheckBox("Display 50-day MA")
         self.ma200_check = QCheckBox("Display 200-day MA")
         self.bb_check = QCheckBox("Display Bollinger Bands")
         self.macd_check = QCheckBox("Display MACD")
         self.rsi_check = QCheckBox("Display RSI")
-        self.ma50_check.setChecked(False)
-        self.ma200_check.setChecked(False)
-        self.bb_check.setChecked(False)
-        self.macd_check.setChecked(False)
-        self.rsi_check.setChecked(False)
+        checkboxes = [self.ma50_check, self.ma200_check, self.bb_check, self.macd_check, self.rsi_check]
+        for checkbox in checkboxes:
+            checkbox.setChecked(False)
+            controls_layout.addWidget(checkbox)
+        controls_layout.addStretch()
 
-        for widget in [self.ma50_check, self.ma200_check, self.bb_check, self.macd_check, self.rsi_check]:
-            controls_layout.addWidget(widget)
-        controls_layout.addStretch(1)
-
-        # Dropdown for selecting the date range
+        # Column 2: Inputs (middle column)
+        inputs_layout = QVBoxLayout()
+        self.ticker_label = QLabel('Ticker Symbol:')
+        self.ticker_input = QLineEdit()
         self.range_label = QLabel('Select Date Range:')
         self.range_combo = QComboBox()
         self.range_combo.addItems(["1D", "5D", "1MO", "3MO", "6MO", "YTD", "1Y", "5Y", "MAX"])
         self.interval_label = QLabel('Select Interval:')
         self.interval_combo = QComboBox()
         self.interval_combo.addItems(["1m", '2m', "5m", "30m", "1h", "1d", "1wk"])
-
-        # Adding widgets to input_layout
-        self.ticker_label = QLabel('Ticker Symbol:')
-        self.ticker_input = QLineEdit()
         self.run_button = QPushButton('Run Analysis')
         self.run_button.clicked.connect(self.on_run)
+        input_elements = [
+            (self.ticker_label, self.ticker_input),
+            (self.range_label, self.range_combo),
+            (self.interval_label, self.interval_combo),
+            (None, self.run_button)
+        ]
+        for label, widget in input_elements:
+            if label:
+                inputs_layout.addWidget(label)
+            inputs_layout.addWidget(widget)
+        inputs_layout.addStretch()
 
-        for widget in [self.ticker_label, self.ticker_input, self.range_label, self.range_combo, self.interval_label, self.interval_combo, self.run_button]:
-            input_layout.addWidget(widget)
-        input_layout.addStretch(1)
-
-        # Add control and input layouts to main layout
-        main_layout.addLayout(controls_layout, 1)
-        main_layout.addLayout(input_layout, 1)
-
-        # Result and Canvas area
+        # Column 3: Result Text (right column)
+        result_layout = QVBoxLayout()
         self.result_text = QTextEdit()
         self.result_text.setReadOnly(True)
         self.result_text.setMinimumHeight(130)
         self.result_text.setFont(QFont('Arial', 15))
+        result_layout.addWidget(self.result_text)
+        result_layout.addStretch()
 
+        # Add columns to the first row
+        row1_layout.addLayout(controls_layout, 1)
+        row1_layout.addLayout(inputs_layout, 2)
+        row1_layout.addLayout(result_layout, 3)
+
+        # Second Row: Chart area
+        row2_layout = QVBoxLayout()
         self.figure = plt.figure(figsize=(12, 8))
         self.canvas = FigureCanvas(self.figure)
+        row2_layout.addWidget(self.canvas)
 
-        vertical_layout_for_chart = QVBoxLayout()
-        vertical_layout_for_chart.addWidget(self.result_text)
-        vertical_layout_for_chart.addWidget(self.canvas)
-
-        # Add this vertical layout to main layout with a higher stretch factor to give more space to the chart
-        main_layout.addLayout(vertical_layout_for_chart, 3)
+        # Add rows to the main layout
+        main_layout.addLayout(row1_layout)
+        main_layout.addLayout(row2_layout)
 
         self.setLayout(main_layout)
         self.setWindowTitle('Volume Profile Trading Strategy')
         self.setWindowIcon(QIcon('icon.png'))
 
-    
     def on_run(self):
         ticker = self.ticker_input.text().strip().upper()
         range_selected = self.range_combo.currentText()  # Changed from currentData to currentText
